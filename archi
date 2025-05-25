@@ -1,0 +1,66 @@
+# Project Architecture: Broker Call Accuracy Tracker
+
+---
+
+## 1. System Overview
+A platform that ingests investment calls from Indian brokers (manual and crowdsourced), monitors stock performance over time, and assigns accuracy scores based on price movement relative to targets, stop-losses, and deadlines.
+
+---
+
+## 2. Components
+
+### 2.1 Frontend
+- **Dashboard:** Display broker profiles, accuracy stats, leaderboards
+- **Call Submission:** Form for submitting investment calls (Buy/Sell, target, stop-loss, timeframe)
+- **Call Tracker View:** Individual call performance, chart view with price over time
+- **Admin Tools:** Moderate user submissions, approve/reject/edit calls
+
+### 2.2 Backend (APIs & Logic)
+- **Call Management API:** CRUD for broker calls
+- **Scoring Engine:** Evaluates each call using historical price data, applies scoring logic
+- **Data Fetcher:** Periodically pulls stock price data from a free API (e.g., Yahoo Finance/NSE)
+- **User Management:** Authentication, role-based permissions (admin, user)
+
+### 2.3 Database Design
+- **Brokers Table**
+  - ID, Name, Description, Website, Trust Score
+
+- **Calls Table**
+  - ID, Broker ID, Stock Symbol, Action (Buy/Sell/Hold), Target Price, Stop Loss, Entry Date, Expiry Date, Status, Score, Time to Outcome
+
+- **Users Table**
+  - ID, Username, Email, Role (admin/user), Submissions
+
+- **Price History Table (Optional Cache)**
+  - Symbol, Date, Open, High, Low, Close
+
+---
+
+## 3. Scoring Logic Module
+- **Adopted Logic (MVP):**
+  - `+1` → Target hit before stop-loss or expiry
+  - `0` → Neither target nor stop-loss hit (e.g., expired or still in range)
+  - `–1` → Stop-loss hit before target
+
+---
+
+## 4. Third-party Integrations
+- **Stock Price APIs:** Yahoo Finance, Alpha Vantage, or NSE India (free endpoints)
+- **Authentication:** Firebase Auth or Auth0 (optional for scaling)
+
+---
+
+## 5. Optional Enhancements
+- Notifications for call outcomes
+- Broker credibility score based on performance history
+- Community voting or flagging system for spam or inaccurate calls
+- API access for third parties
+
+---
+
+## 6. Hosting & Deployment
+- **Frontend:** React hosted on Vercel/Netlify
+- **Backend:** Node.js/Express
+- **Database:** MongoDB (cloud-managed)
+
+---
