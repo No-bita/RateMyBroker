@@ -14,7 +14,6 @@
     "node-cron": "^4.0.7",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "react-joyride": "^2.9.3",
     "recharts": "^2.15.3",
     "yahoo-finance2": "^2.13.3"
   }

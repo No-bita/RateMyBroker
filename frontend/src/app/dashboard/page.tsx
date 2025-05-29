@@ -8,7 +8,7 @@ import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { Line } from 'react-chartjs-2';
 import CallSubmissionForm from '@/components/CallSubmissionForm';
-const Joyride = dynamic(() => import('react-joyride'), { ssr: false });
+// const Joyride = dynamic(() => import('react-joyride'), { ssr: false });
 
 interface Stock {
   symbol: string;
@@ -177,33 +177,33 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'Equity' | 'Derivative'>('Equity');
   const [callType, setCallType] = useState<'Equity' | 'Derivative'>('Equity');
   const [showSubmittedCallsModal, setShowSubmittedCallsModal] = useState(false);
-  const [runTour, setRunTour] = useState(false);
-  const tourSteps = [
-    {
-      target: '#dashboard-title',
-      content: "Welcome to your RateMyBroker Dashboard! Here you can track, analyze, and submit stock calls.",
-    },
-    {
-      target: '#broker-watchlist',
-      content: "Add and track your favorite brokers here. Use the search bar to find brokers and add them to your watchlist.",
-    },
-    {
-      target: '#call-tracker',
-      content: "See all active, target hit, and stop loss hit calls from your tracked brokers. Filter by Equity or Derivative.",
-    },
-    {
-      target: '#performance-chart',
-      content: "Analyze the performance of selected calls over time with interactive charts.",
-    },
-    {
-      target: '#my-submitted-calls',
-      content: "View the status of all calls you\'ve submitted for verification and tracking.",
-    },
-    {
-      target: '#new-call-btn',
-      content: "Submit a new call for verification. Attach a document to verify the call\'s authenticity.",
-    },
-  ];
+  // const [runTour, setRunTour] = useState(false);
+  // const tourSteps = [
+  //   {
+  //     target: '#dashboard-title',
+  //     content: "Welcome to your RateMyBroker Dashboard! Here you can track, analyze, and submit stock calls.",
+  //   },
+  //   {
+  //     target: '#broker-watchlist',
+  //     content: "Add and track your favorite brokers here. Use the search bar to find brokers and add them to your watchlist.",
+  //   },
+  //   {
+  //     target: '#call-tracker',
+  //     content: "See all active, target hit, and stop loss hit calls from your tracked brokers. Filter by Equity or Derivative.",
+  //   },
+  //   {
+  //     target: '#performance-chart',
+  //     content: "Analyze the performance of selected calls over time with interactive charts.",
+  //   },
+  //   {
+  //     target: '#my-submitted-calls',
+  //     content: "View the status of all calls you\'ve submitted for verification and tracking.",
+  //   },
+  //   {
+  //     target: '#new-call-btn',
+  //     content: "Submit a new call for verification. Attach a document to verify the call\'s authenticity.",
+  //   },
+  // ];
 
   // Sidebar links
   const sidebarLinks = [
@@ -349,13 +349,13 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!localStorage.getItem('onboardingShown')) {
-      setRunTour(true);
+      // setRunTour(true);
     }
   }, []);
 
   return (
     <div className="flex min-h-screen" style={{ background: '#F8FAFB' }}>
-      <Joyride
+      {/* <Joyride
         steps={tourSteps}
         run={runTour}
         continuous
@@ -368,7 +368,7 @@ export default function DashboardPage() {
             localStorage.setItem('onboardingShown', 'true');
           }
         }}
-      />
+      /> */}
       {/* Main content */}
       <div className="flex-1 flex flex-col bg-white">
         <header className="flex items-center justify-between px-10 py-8" style={{ background: 'transparent', border: 'none' }}>
