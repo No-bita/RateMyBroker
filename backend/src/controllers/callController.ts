@@ -3,6 +3,7 @@ import { Call } from '../models/Call';
 import { Notification } from '../models/Notification';
 import { AppError } from '../middleware/errorHandler';
 import yahooFinance from 'yahoo-finance2';
+import path from 'path';
 
 export const createCall = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -21,7 +22,8 @@ export const createCall = async (req: Request, res: Response, next: NextFunction
       priceHistory,
       outcomeHistory,
       news,
-      comments
+      comments,
+      type
     } = req.body;
 
     if (!stock || !broker || !action || !target || !stopLoss || !entryDate || !expiryDate || !currentPrice) {
@@ -65,7 +67,8 @@ export const createCall = async (req: Request, res: Response, next: NextFunction
       outcomeHistory: parseJSON(outcomeHistory, []),
       news: parseJSON(news, []),
       comments: parseJSON(comments, []),
-      attachments
+      attachments,
+      type
     });
 
     res.status(201).json({ status: 'success', data: { call } });
@@ -159,6 +162,51 @@ export const getCalls = async (req: Request, res: Response, next: NextFunction) 
     query.status = { $ne: 'PENDING VERIFICATION' };
     const calls = await Call.find(query).populate('creator', 'name email');
     res.status(200).json({ status: 'success', data: { calls } });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Compute broker stats from calls
+export const getBrokerStats = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const brokerName = req.params.brokerName;
+    if (!brokerName) return next(new AppError('Broker name is required', 400));
+
+    // Fetch all calls for this broker
+    const calls = await Call.find({ broker: brokerName });
+    if (!calls.length) return res.status(404).json({ status: 'fail', message: 'No calls found for this broker' });
+
+    // Compute stats
+    const totalCalls = calls.length;
+    const logoMap: Record<string, string> = {
+      'Motilal Oswal': '/mo.png',
+      'ICICI Securities': '/icici.png',
+      'HDFC Securities': '/hdfc.png',
+      'Angel One': '/angel.png',
+      'IIFL Securities': '/iifl.png',
+      'Kotak Securities': '/kotak.png',
+      'SBI Securities': '/sbi.png',
+    };
+    const logo = logoMap[brokerName] || '';
+    // Recent calls (last 10, sorted by entryDate desc)
+    const recentCalls = calls
+      .sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
+      .slice(0, 10)
+      .map(call => ({
+        stock: call.stock,
+        action: call.action,
+        status: call.status,
+        date: call.entryDate,
+        type: call.type,
+      }));
+
+    res.json({
+      name: brokerName,
+      logo,
+      totalCalls,
+      recentCalls,
+    });
   } catch (error) {
     next(error);
   }

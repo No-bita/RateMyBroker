@@ -51,7 +51,7 @@ export default function LoginPage() {
         {error && <div className="text-red-600 text-sm text-center">{error}</div>}
         <button
           type="submit"
-          className="w-full bg-indigo-600 text-white py-2 rounded font-semibold hover:bg-indigo-700 transition"
+          className="w-full bg-black text-white py-2 rounded font-semibold hover:bg-gray-900 transition"
           disabled={loading}
         >
           {loading ? 'Logging in...' : 'Login'}

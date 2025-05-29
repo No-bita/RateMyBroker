@@ -15,9 +15,8 @@ const mockNotifications = [
 
 const sidebarLinks = [
   { label: 'Dashboard', icon: <FaHome />, href: '/dashboard' },
-  { label: 'Broker Calls', icon: <FaExchangeAlt />, href: '/dashboard/calls' },
-  { label: 'Broker Comparison', icon: <FaChartLine />, href: '/dashboard/comparison' },
   { label: 'Brokers', icon: <FaStar />, href: '/dashboard/brokers' },
+  { label: 'Broker Comparison', icon: <FaChartLine />, href: '/dashboard/comparison' },
   { label: 'Settings', icon: <FaCog />, href: '/dashboard/settings' },
 ];
 

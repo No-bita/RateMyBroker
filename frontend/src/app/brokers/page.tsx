@@ -2,9 +2,9 @@ import { FaUserTie, FaStar } from 'react-icons/fa';
 import Link from 'next/link';
 
 const mockBrokers = [
-  { id: '1', name: 'Motilal Oswal', trustScore: 92, accuracy: 0.78, website: 'https://www.motilaloswal.com/' },
-  { id: '2', name: 'ICICI Securities', trustScore: 88, accuracy: 0.74, website: 'https://www.icicidirect.com/' },
-  { id: '3', name: 'HDFC Securities', trustScore: 85, accuracy: 0.71, website: 'https://www.hdfcsec.com/' },
+  { id: '1', name: 'Motilal Oswal', website: 'https://www.motilaloswal.com/' },
+  { id: '2', name: 'ICICI Securities', website: 'https://www.icicidirect.com/' },
+  { id: '3', name: 'HDFC Securities', website: 'https://www.hdfcsec.com/' },
 ];
 
 export default function BrokersPage() {
@@ -18,17 +18,6 @@ export default function BrokersPage() {
               <div className="flex items-center gap-2 mb-2">
                 <FaUserTie className="text-indigo-400" />
                 <span className="text-lg font-bold text-gray-800">{broker.name}</span>
-              </div>
-              <div className="flex items-center gap-2 mb-1">
-                <FaStar className="text-yellow-400" />
-                <span className="text-sm text-gray-600 font-medium">Trust Score:</span>
-                <span className="font-semibold text-gray-900">{broker.trustScore}</span>
-              </div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm text-gray-600 font-medium">Accuracy:</span>
-                <span className="ml-1 px-2 py-0.5 rounded bg-green-100 text-green-700 font-semibold text-xs">
-                  {Math.round(broker.accuracy * 100)}%
-                </span>
               </div>
             </div>
             <div className="mt-4 flex gap-2">

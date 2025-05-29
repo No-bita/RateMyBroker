@@ -1,5 +1,5 @@
 import express from 'express';
-import { createCall, getPendingCalls, approveCall, rejectCall, getUserCalls, getCallPerformance, getCalls } from '../controllers/callController';
+import { createCall, getPendingCalls, approveCall, rejectCall, getUserCalls, getCallPerformance, getCalls, getBrokerStats } from '../controllers/callController';
 import { protect } from '../middleware/auth';
 import multer from 'multer';
 // import { restrictTo } from '../middleware/auth'; // Uncomment if you have role-based middleware
@@ -15,5 +15,6 @@ router.post('/:id/approve', protect, /*restrictTo('admin'),*/ approveCall);
 router.post('/:id/reject', protect, /*restrictTo('admin'),*/ rejectCall);
 router.get('/:callId/performance', getCallPerformance);
 router.get('/', getCalls);
+router.get('/broker/:brokerName', getBrokerStats);
 
 export default router; 

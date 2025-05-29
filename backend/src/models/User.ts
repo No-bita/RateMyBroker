@@ -6,12 +6,14 @@ import { COLLECTIONS } from '../config/constants';
 
 export interface IUser extends Document {
   email: string;
-  password: string;
+  password?: string;
   name: string;
   role: 'user' | 'admin';
   createdAt: Date;
   updatedAt: Date;
   watchlist?: string[];
+  googleId?: string;
+  avatar?: string;
   comparePassword(candidatePassword: string): Promise<boolean>;
   generateAuthToken(): string;
 }
@@ -27,7 +29,7 @@ const userSchema = new Schema<IUser>(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: false,
       minlength: [6, 'Password must be at least 6 characters long'],
       select: false,
     },
@@ -44,6 +46,14 @@ const userSchema = new Schema<IUser>(
     watchlist: {
       type: [String],
       default: [],
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    avatar: {
+      type: String,
     },
   },
   {

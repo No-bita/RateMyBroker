@@ -4,6 +4,7 @@ import { register, login, getCurrentUser, logout } from '../controllers/authCont
 import { protect } from '../middleware/auth';
 import { validateRequest } from '../middleware/validateRequest';
 import { authLimiter } from '../middleware/rateLimiter';
+import passport from 'passport';
 
 const router = express.Router();
 
@@ -41,5 +42,20 @@ router.post('/login', authLimiter, validateRequest(loginValidation), login);
 // Protected routes
 router.get('/me', protect, getCurrentUser);
 router.post('/logout', protect, logout);
+
+// Google OAuth routes - commented out until credentials are available
+/*
+// Google OAuth login
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+// Google OAuth callback
+router.get('/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login', session: true }),
+  (req, res) => {
+    // Redirect or respond with user info/token
+    res.redirect('/dashboard');
+  }
+);
+*/
 
 export default router; 

@@ -11,6 +11,9 @@ import stockRoutes from './routes/stockRoutes';
 import { env, isProd } from './config/env';
 import cookieParser from 'cookie-parser';
 import './utils/priceTrackerJob';
+import session from 'express-session';
+import passport from 'passport';
+import './config/passport';
 
 // Create Express app
 const app = express();
@@ -24,6 +27,13 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your_secret',
+  resave: false,
+  saveUninitialized: false,
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Database connection
 mongoose

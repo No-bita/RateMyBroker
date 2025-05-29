@@ -20,6 +20,7 @@ export interface ICall extends Document {
   news: Array<{ title: string; url: string }>;
   comments: Array<{ user: string; text: string }>;
   attachments: Array<{ name: string; url: string }>;
+  type: 'Equity' | 'Derivative';
 }
 
 const callSchema = new Schema<ICall>({
@@ -41,6 +42,7 @@ const callSchema = new Schema<ICall>({
   news: [{ title: String, url: String }],
   comments: [{ user: String, text: String }],
   attachments: [{ name: String, url: String }],
+  type: { type: String, enum: ['Equity', 'Derivative'], default: 'Equity' },
 }, {
   timestamps: true,
   collection: COLLECTIONS.CALLS,

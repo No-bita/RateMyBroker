@@ -8,24 +8,18 @@ const mockBrokers = [
   {
     id: '1',
     name: 'Motilal Oswal',
-    trustScore: 92,
-    accuracy: 0.78,
     website: 'https://www.motilaloswal.com/',
     description: 'Motilal Oswal is a leading Indian brokerage with a strong research team and a long track record.'
   },
   {
     id: '2',
     name: 'ICICI Securities',
-    trustScore: 88,
-    accuracy: 0.74,
     website: 'https://www.icicidirect.com/',
     description: 'ICICI Securities is a top full-service broker in India, known for its robust platform and research.'
   },
   {
     id: '3',
     name: 'HDFC Securities',
-    trustScore: 85,
-    accuracy: 0.71,
     website: 'https://www.hdfcsec.com/',
     description: 'HDFC Securities offers a wide range of investment products and insightful research.'
   },
@@ -57,19 +51,6 @@ export default function BrokerProfilePage() {
           <a href={broker.website} target="_blank" rel="noopener noreferrer" className="ml-2 text-blue-600 hover:underline flex items-center gap-1 text-sm">
             Website <FaExternalLinkAlt />
           </a>
-        </div>
-        <div className="flex items-center gap-4 mb-2">
-          <div className="flex items-center gap-2">
-            <FaStar className="text-yellow-400" />
-            <span className="text-sm text-gray-600 font-medium">Trust Score:</span>
-            <span className="font-semibold text-gray-900">{broker.trustScore}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600 font-medium">Accuracy:</span>
-            <span className="ml-1 px-2 py-0.5 rounded bg-green-100 text-green-700 font-semibold text-xs">
-              {Math.round(broker.accuracy * 100)}%
-            </span>
-          </div>
         </div>
         <p className="text-gray-700 mt-2 text-sm">{broker.description}</p>
       </div>

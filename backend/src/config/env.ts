@@ -29,7 +29,7 @@ for (const envVar of requiredEnvVars) {
 
 // Export validated and typed environment configuration
 export const env: EnvConfig = {
-  port: parseInt(process.env.PORT || '5000', 10),
+  port: parseInt(process.env.PORT || '5001', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/fincheck',
   jwtSecret: process.env.JWT_SECRET || 'your_jwt_secret_here',

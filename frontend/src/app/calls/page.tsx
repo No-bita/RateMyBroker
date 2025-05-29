@@ -18,6 +18,7 @@ type Call = {
 export default function CallsPage() {
   const [calls, setCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showCallForm, setShowCallForm] = useState(false);
 
   useEffect(() => {
     const fetchCalls = async () => {
@@ -61,18 +62,17 @@ export default function CallsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Investment Calls</h1>
-      
+      <div className="mb-6">
+        <button
+          className="px-7 py-3 rounded-2xl font-bold text-lg shadow transition bg-[#393B41] text-white hover:bg-[#23242A]"
+          onClick={() => setShowCallForm(true)}
+        >
+          + New Call
+        </button>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Call Submission Form */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Submit New Call</h2>
-            <CallSubmissionForm />
-          </div>
-        </div>
-
-        {/* Recent Calls List */}
-        <div className="lg:col-span-2">
+        {/* Call Submission Form (now in modal) */}
+        <div className="lg:col-span-3">
           <div className="bg-white rounded-lg shadow p-6">
             <h2 className="text-xl font-semibold mb-4">Recent Calls</h2>
             {loading ? (
@@ -121,6 +121,19 @@ export default function CallsPage() {
           </div>
         </div>
       </div>
+      {showCallForm && (
+        <div
+          className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50"
+          onClick={() => setShowCallForm(false)}
+        >
+          <div
+            className="bg-white rounded-xl p-6 w-full max-w-xl shadow-lg relative"
+            onClick={e => e.stopPropagation()}
+          >
+            <CallSubmissionForm onCancel={() => setShowCallForm(false)} />
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

@@ -1,10 +1,13 @@
 'use client';
+import 'chart.js/auto';
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { FaEye, FaPlus, FaArrowUp, FaChartLine, FaSearch, FaFilter, FaTimes, FaCalendarAlt, FaBell, FaUserCircle, FaUsers, FaCog, FaSignOutAlt, FaHome, FaExchangeAlt, FaStar, FaWallet, FaClipboardList } from 'react-icons/fa';
 import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import { Line } from 'react-chartjs-2';
+import CallSubmissionForm from '@/components/CallSubmissionForm';
 const Joyride = dynamic(() => import('react-joyride'), { ssr: false });
 
 interface Stock {
@@ -14,8 +17,6 @@ interface Stock {
 
 interface Broker {
   name: string;
-  trustScore: number;
-  accuracy: number;
 }
 
 interface Call {
@@ -47,13 +48,13 @@ interface CallFormProps {
 }
 
 const allBrokers = [
-  { name: 'Motilal Oswal', logo: '/mo.png', trustScore: 92, accuracy: 0.78 },
-  { name: 'ICICI Securities', logo: '/icici.png', trustScore: 88, accuracy: 0.74 },
-  { name: 'HDFC Securities', logo: '/hdfc.png', trustScore: 85, accuracy: 0.71 },
-  { name: 'Angel One', logo: '/angel.png', trustScore: 90, accuracy: 0.76 },
-  { name: 'IIFL Securities', logo: '/iifl.png', trustScore: 87, accuracy: 0.73 },
-  { name: 'Kotak Securities', logo: '/kotak.png', trustScore: 89, accuracy: 0.75 },
-  { name: 'SBI Securities', logo: '/sbi.png', trustScore: 86, accuracy: 0.72 },
+  { name: 'Motilal Oswal', logo: '/mo.png' },
+  { name: 'ICICI Securities', logo: '/icici.png' },
+  { name: 'HDFC Securities', logo: '/hdfc.png' },
+  { name: 'Angel One', logo: '/angel.png' },
+  { name: 'IIFL Securities', logo: '/iifl.png' },
+  { name: 'Kotak Securities', logo: '/kotak.png' },
+  { name: 'SBI Securities', logo: '/sbi.png' },
 ];
 
 const mockCalls = [
@@ -176,11 +177,11 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<'Equity' | 'Derivative'>('Equity');
   const [callType, setCallType] = useState<'Equity' | 'Derivative'>('Equity');
   const [showSubmittedCallsModal, setShowSubmittedCallsModal] = useState(false);
-  const [runTour, setRunTour] = useState(true);
+  const [runTour, setRunTour] = useState(false);
   const tourSteps = [
     {
       target: '#dashboard-title',
-      content: "Welcome to your FinCheck Dashboard! Here you can track, analyze, and submit stock calls.",
+      content: "Welcome to your RateMyBroker Dashboard! Here you can track, analyze, and submit stock calls.",
     },
     {
       target: '#broker-watchlist',
@@ -207,9 +208,8 @@ export default function DashboardPage() {
   // Sidebar links
   const sidebarLinks = [
     { label: 'Dashboard', icon: <FaHome />, active: true },
-    { label: 'Broker Calls', icon: <FaExchangeAlt /> },
+    { label: 'Brokers', icon: <FaStar /> },
     { label: 'Broker Comparison', icon: <FaChartLine /> },
-    { label: 'aBrokers', icon: <FaStar /> },
     { label: 'Settings', icon: <FaCog /> },
   ];
 
@@ -245,8 +245,6 @@ export default function DashboardPage() {
     const brokerCalls = calls.filter(call => call.broker === brokerName);
     const broker = allBrokers.find(b => b.name === brokerName);
     return {
-      trustScore: broker?.trustScore || 0,
-      accuracy: broker?.accuracy || 0,
       totalCalls: brokerCalls.length,
       winRate:
         brokerCalls.length > 0
@@ -343,6 +341,18 @@ export default function DashboardPage() {
     fetchCalls();
   }, []);
 
+  // Only show approved calls in the table
+  const approvedUserCalls = userCalls.filter(call => call.status === 'APPROVED');
+
+  const displayedUserCalls = userCalls.slice(0, 3);
+  const hasMoreUserCalls = userCalls.length > 3;
+
+  useEffect(() => {
+    if (!localStorage.getItem('onboardingShown')) {
+      setRunTour(true);
+    }
+  }, []);
+
   return (
     <div className="flex min-h-screen" style={{ background: '#F8FAFB' }}>
       <Joyride
@@ -353,7 +363,10 @@ export default function DashboardPage() {
         showProgress
         styles={{ options: { zIndex: 10000 } }}
         callback={data => {
-          if (data.status === 'finished' || data.status === 'skipped') setRunTour(false);
+          if (data.status === 'finished' || data.status === 'skipped') {
+            setRunTour(false);
+            localStorage.setItem('onboardingShown', 'true');
+          }
         }}
       />
       {/* Main content */}
@@ -471,10 +484,6 @@ export default function DashboardPage() {
                           <Image src={broker.logo} alt={broker.name} width={72} height={72} className="object-contain rounded-full" />
                           <span className="font-medium text-gray-800 text-sm">{idx + 1}. {broker.name}</span>
                         </div>
-                        <span className="text-xs text-gray-500">Trust: {broker.trustScore}</span>
-                        <span className="ml-2 px-2 py-0.5 rounded bg-green-100 text-green-700 font-semibold text-xs">
-                          {Math.round(broker.accuracy * 100)}% acc
-                        </span>
                         <button
                           className="ml-4 p-2 rounded-full hover:bg-red-100 transition text-red-500"
                           title="Remove from watchlist"
@@ -523,22 +532,23 @@ export default function DashboardPage() {
               ) : calls.length === 0 ? (
                 <div className="text-gray-400 text-center py-6">No calls available for your watchlist brokers.</div>
               ) : (
-                <table className="min-w-full bg-white text-sm">
+                <table className="min-w-full bg-white text-sm mb-8">
                   <thead>
                     <tr>
                       <th className="px-6 py-4 text-left font-medium text-[#A3A3A3] uppercase tracking-wider">Stock</th>
                       <th className="px-6 py-4 text-left font-medium text-[#A3A3A3] uppercase tracking-wider">Broker</th>
                       <th className="px-6 py-4 text-left font-medium text-[#A3A3A3] uppercase tracking-wider">Type</th>
                       <th className="px-6 py-4 text-left font-medium text-[#A3A3A3] uppercase tracking-wider">Action</th>
+                      <th className="px-6 py-4 text-left font-medium text-[#A3A3A3] uppercase tracking-wider">Entry Date</th>
                       <th className="px-6 py-4 text-left font-medium text-[#A3A3A3] uppercase tracking-wider">Expiry Date</th>
                       <th className="px-6 py-4 text-left font-medium text-[#A3A3A3] uppercase tracking-wider">Target</th>
                       <th className="px-6 py-4 text-left font-medium text-[#A3A3A3] uppercase tracking-wider">CMP</th>
                       <th className="px-6 py-4 text-left font-medium text-[#A3A3A3] uppercase tracking-wider">Stop Loss</th>
-                      <th className="px-6 py-4 text-left font-medium text-[#A3A3A3] uppercase tracking-wider">Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {calls
+                      .filter(call => call.status === 'APPROVED')
                       .filter(call => (call.type ? call.type === activeTab : activeTab === 'Equity'))
                       .map((call, idx) => (
                         <tr
@@ -550,29 +560,11 @@ export default function DashboardPage() {
                           <td className="px-6 py-4 text-[#22223B]">{call.broker}</td>
                           <td className="px-6 py-4 text-[#22223B]">{call.type || '-'}</td>
                           <td className={`px-6 py-4 font-bold ${call.action === 'BUY' ? 'text-green-700' : 'text-red-700'}`}>{call.action}</td>
+                          <td className="px-6 py-4 text-[#8B909A]">{call.entryDate}</td>
                           <td className="px-6 py-4 text-[#8B909A]">{call.expiryDate}</td>
                           <td className="px-6 py-4 text-[#22C55E] font-semibold">₹{call.target}</td>
                           <td className="px-6 py-4 font-bold text-[#000]">{call.currentPrice === 0 ? 'unable to fetch price' : `₹${call.currentPrice}`}</td>
                           <td className="px-6 py-4 text-[#E11D48] font-semibold">₹{call.stopLoss}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              call.status === 'ACTIVE'
-                                ? 'bg-blue-100 text-blue-700'
-                                : call.status === 'TARGET HIT'
-                                ? 'bg-green-100 text-green-700'
-                                : call.status === 'STOP LOSS HIT'
-                                ? 'bg-red-100 text-red-700'
-                                : 'bg-gray-100 text-gray-500'
-                            }`}>
-                              {call.status === 'ACTIVE'
-                                ? 'Active'
-                                : call.status === 'TARGET HIT'
-                                ? 'Target Hit'
-                                : call.status === 'STOP LOSS HIT'
-                                ? 'SL Hit'
-                                : call.status}
-                            </span>
-                          </td>
                         </tr>
                       ))}
                   </tbody>
@@ -581,40 +573,85 @@ export default function DashboardPage() {
             </div>
           </div>
           {/* Performance Chart Card (restyle) */}
-          <div className="bg-white border-2 border-[#F0F1F3] rounded-2xl p-8 mb-8 shadow-none" id="performance-chart">
+          <div className="bg-white border-2 border-[#F0F1F3] rounded-2xl p-8 mb-8 shadow-none mt-8" id="performance-chart">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-medium text-[1.25rem] text-[#22223B] tracking-tight font-inter flex items-center gap-2">
                 <FaChartLine className="w-5 h-5" style={{ color: '#A3A3A3' }} />
                 Price
               </h2>
-              {/* Remove legend, keep dropdown placeholder for layout consistency */}
-              <button className="ml-4 px-4 py-2 bg-[#F6FEE7] text-[#22223B] rounded-lg border border-[#E9F366] font-semibold text-sm flex items-center gap-2 shadow-sm cursor-pointer">
-                Last 7 days
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5" stroke="#22223B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              </button>
             </div>
-            <div className="flex items-center justify-center h-48 text-[#A3A3A3]">{isLoadingChart ? (<span className="text-gray-400 text-xs">Loading chart data...</span>) : selectedCall ? (<div className="text-gray-700 text-base text-center"><div>Showing performance for {selectedCall.stock} ({selectedCall.action})</div>{chartData.length > 0 ? (<div className="mt-2"><span className="text-gray-300 text-xs">[Chart with live data]</span></div>) : (<div className="mt-2 text-gray-400 text-xs">No data available</div>)}</div>) : (<span className="text-gray-400 text-xs">Select a call to view performance</span>)}</div>
+            <div className="flex items-center justify-center text-[#A3A3A3]">
+              {isLoadingChart ? (
+                <span className="text-gray-400 text-xs">Loading chart data...</span>
+              ) : selectedCall ? (
+                <div className="w-full max-w-full overflow-x-auto mt-8" style={{ minHeight: 300 }}>
+                  {chartData.length > 0 ? (
+                    <div className="w-full max-w-full overflow-x-auto" style={{ minHeight: 300 }}>
+                      <Line
+                        data={{
+                          labels: chartData.map(d => new Date(d.date).toLocaleDateString()),
+                          datasets: [
+                            {
+                              label: 'Close Price',
+                              data: chartData.map(d => d.close),
+                              borderColor: 'rgb(75, 192, 192)',
+                              backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                              tension: 0.1,
+                            },
+                          ],
+                        }}
+                        options={{
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: { position: 'bottom' },
+                          },
+                          scales: {
+                            x: {
+                              ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 10,
+                                maxRotation: 45,
+                                minRotation: 30,
+                              },
+                            },
+                            y: { beginAtZero: false },
+                          },
+                        }}
+                        height={300}
+                      />
+                    </div>
+                  ) : (
+                    <div className="mt-2 text-gray-400 text-xs">No data available</div>
+                  )}
+                </div>
+              ) : (
+                <span className="text-gray-400 text-xs">Select a call to view performance</span>
+              )}
+            </div>
           </div>
           {/* User's Submitted Calls Section (moved to bottom) */}
-          <div className="bg-white border-2 border-[#F0F1F3] rounded-2xl p-6 w-full mb-8" id="my-submitted-calls">
+          <div className="bg-white border-2 border-[#F0F1F3] rounded-2xl p-6 w-full mb-8" id="my-submitted-calls" style={{ maxHeight: '340px', overflowY: 'auto' }}>
             <div className="flex flex-row items-center justify-between mb-4">
               <h2 className="font-medium text-[1.25rem] text-[#22223B] tracking-tight font-inter mb-0 flex items-center gap-2">
                 <FaClipboardList className="w-5 h-5" style={{ color: '#A3A3A3' }} />
                 My Submitted Calls
               </h2>
-              <button
-                type="button"
-                className="text-sm text-green-600 underline hover:underline font-medium"
-                onClick={() => setShowSubmittedCallsModal(true)}
-              >
-                View all
-              </button>
+              {hasMoreUserCalls && (
+                <button
+                  type="button"
+                  className="text-sm text-green-600 underline hover:underline font-medium"
+                  onClick={() => setShowSubmittedCallsModal(true)}
+                >
+                  View all
+                </button>
+              )}
             </div>
             {userCallsLoading ? (
               <div className="text-gray-500">Loading...</div>
             ) : userCallsError ? (
               <div className="text-red-500">{userCallsError}</div>
-            ) : userCalls.length === 0 ? (
+            ) : displayedUserCalls.length === 0 ? (
               <div className="text-gray-400">You have not submitted any calls yet.</div>
             ) : (
               <table className="min-w-full divide-y divide-gray-100 text-sm">
@@ -632,7 +669,7 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-50">
-                  {userCalls.map((call, idx) => (
+                  {displayedUserCalls.map((call, idx) => (
                     <tr key={idx}>
                       <td className="px-4 py-2 font-medium text-gray-900">{call.stock}</td>
                       <td className="px-4 py-2 text-gray-700">{call.broker}</td>
@@ -643,13 +680,7 @@ export default function DashboardPage() {
                       <td className="px-4 py-2 text-[#000] font-semibold">{call.currentPrice === 0 ? 'unable to fetch price' : `₹${call.currentPrice}`}</td>
                       <td className="px-4 py-2 text-[#E11D48] font-semibold">₹{call.stopLoss}</td>
                       <td className="px-4 py-2">
-                        <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                          call.status === 'APPROVED'
-                            ? 'bg-green-100 text-green-700'
-                            : call.status === 'REJECTED'
-                            ? 'bg-red-100 text-red-700'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
+                        <span className={`px-2 py-1 rounded text-xs font-semibold ${call.status === 'APPROVED' ? 'bg-green-100 text-green-700' : call.status === 'REJECTED' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-800'}`}>
                           {call.status}
                         </span>
                       </td>
@@ -762,22 +793,10 @@ export default function DashboardPage() {
           onClick={() => setShowCallForm(false)}
         >
           <div
-            className="bg-white rounded-xl p-6 w-full max-w-lg shadow-lg relative"
+            className="bg-white rounded-xl p-6 w-full max-w-xl shadow-lg relative"
             onClick={e => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold mb-4 text-black flex items-center gap-2">
-              <FaClipboardList className="w-5 h-5" style={{ color: '#A3A3A3' }} />
-              Submit New Call
-            </h3>
-            <CallForm
-              onSubmit={call => {
-                setShowCallForm(false);
-                setSuccessMessage('Call submitted successfully!');
-                setTimeout(() => setSuccessMessage(''), 4000);
-                // Optionally update your calls list here
-              }}
-              onCancel={() => setShowCallForm(false)}
-            />
+            <CallSubmissionForm onCancel={() => setShowCallForm(false)} />
           </div>
         </div>
       )}
@@ -826,13 +845,7 @@ export default function DashboardPage() {
                     <td className="px-4 py-2 text-[#000] font-semibold">{call.currentPrice === 0 ? 'unable to fetch price' : `₹${call.currentPrice}`}</td>
                     <td className="px-4 py-2 text-[#E11D48] font-semibold">₹{call.stopLoss}</td>
                     <td className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        call.status === 'APPROVED'
-                          ? 'bg-green-100 text-green-700'
-                          : call.status === 'REJECTED'
-                          ? 'bg-red-100 text-red-700'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
+                      <span className={`px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-700`}>
                         {call.status}
                       </span>
                     </td>

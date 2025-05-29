@@ -2,12 +2,13 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
 
 interface User {
   id: string;
   name: string;
   email: string;
+  role: 'user' | 'admin';
 }
 
 interface AuthContextType {
@@ -17,6 +18,8 @@ interface AuthContextType {
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   error: string | null;
+  isAdmin: boolean;
+  isAuthenticated: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  const isAdmin = user?.role === 'admin';
+  const isAuthenticated = !!user;
 
   useEffect(() => {
     // Check if user is logged in on mount
@@ -66,9 +72,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(data.message || 'Login failed');
       }
 
-      const userData = await response.json();
-      setUser(userData);
-      router.push('/dashboard');
+      const { data } = await response.json();
+      setUser(data.user);
+      
+      // Redirect based on role
+      if (data.user.role === 'admin') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
       throw err;
@@ -90,8 +102,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw data;
       }
 
-      const userData = await response.json();
-      setUser(userData);
+      const { data } = await response.json();
+      setUser(data.user);
       router.push('/dashboard');
     } catch (err) {
       if (err && typeof err === 'object' && 'message' in err) {
@@ -114,7 +126,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, error }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      register, 
+      logout, 
+      error,
+      isAdmin,
+      isAuthenticated
+    }}>
       {children}
     </AuthContext.Provider>
   );

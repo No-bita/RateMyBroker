@@ -42,6 +42,7 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
       return next(new AppError('User no longer exists', 401));
     }
 
+    // Attach user to request object
     req.user = user;
     next();
   } catch (error) {
@@ -49,11 +50,23 @@ export const protect = async (req: Request, res: Response, next: NextFunction) =
   }
 };
 
+// Role-based access control middleware
 export const restrictTo = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
+    if (!req.user) {
+      return next(new AppError('Please log in to access this route', 401));
+    }
+
     if (!roles.includes(req.user.role)) {
       return next(new AppError('You do not have permission to perform this action', 403));
     }
+
     next();
   };
-}; 
+};
+
+// Admin-only middleware
+export const adminOnly = restrictTo('admin');
+
+// User-only middleware
+export const userOnly = restrictTo('user'); 

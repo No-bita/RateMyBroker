@@ -131,6 +131,7 @@ export default function LoginPage() {
 
           {/* Social Login */}
           <div className="grid grid-cols-2 gap-4">
+            {/* Google login button - commented out until credentials are available
             <button
               className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg border text-sm font-medium transition"
               style={{ 
@@ -145,20 +146,7 @@ export default function LoginPage() {
               <FaGoogle />
               Google
             </button>
-            <button
-              className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg border text-sm font-medium transition"
-              style={{ 
-                borderColor: '#E5E7EB',
-                color: '#23272F',
-                background: '#F8FAFB',
-                opacity: isLoading ? 0.7 : 1,
-                cursor: isLoading ? 'not-allowed' : 'pointer'
-              }}
-              disabled={isLoading}
-            >
-              <FaGithub />
-              GitHub
-            </button>
+            */}
           </div>
         </div>
 

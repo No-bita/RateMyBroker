@@ -185,8 +185,9 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          {/* Social Signup */}
+          {/* Social Login */}
           <div className="grid grid-cols-2 gap-4">
+            {/* Google login button - commented out until credentials are available
             <button
               className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg border text-sm font-medium transition"
               style={{ 
@@ -201,6 +202,7 @@ export default function RegisterPage() {
               <FaGoogle />
               Google
             </button>
+            */}
             <button
               className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg border text-sm font-medium transition"
               style={{ 

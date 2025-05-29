@@ -1,17 +1,13 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaStar, FaChartLine, FaUserTie, FaExchangeAlt, FaTimes, FaCalendarAlt, FaChartBar, FaHistory } from 'react-icons/fa';
 import Image from 'next/image';
 
 interface Broker {
   name: string;
   logo: string;
-  trustScoreEquity: number;
-  accuracyEquity: number;
   totalCallsEquity: number;
   winRateEquity: number;
-  trustScoreDerivative: number;
-  accuracyDerivative: number;
   totalCallsDerivative: number;
   winRateDerivative: number;
   recentCalls: Array<{
@@ -34,12 +30,8 @@ const mockBrokers: Broker[] = [
   {
     name: 'Angel One',
     logo: '/angel.png',
-    trustScoreEquity: 92,
-    accuracyEquity: 0.78,
     totalCallsEquity: 30,
     winRateEquity: 68,
-    trustScoreDerivative: 85,
-    accuracyDerivative: 0.72,
     totalCallsDerivative: 15,
     winRateDerivative: 61,
     equityCalls: 30,
@@ -61,12 +53,8 @@ const mockBrokers: Broker[] = [
   {
     name: 'HDFC Securities',
     logo: '/hdfc.png',
-    trustScoreEquity: 88,
-    accuracyEquity: 0.74,
     totalCallsEquity: 25,
     winRateEquity: 65,
-    trustScoreDerivative: 80,
-    accuracyDerivative: 0.68,
     totalCallsDerivative: 13,
     winRateDerivative: 59,
     equityCalls: 25,
@@ -88,12 +76,8 @@ const mockBrokers: Broker[] = [
   {
     name: 'ICICI Securities',
     logo: '/icici.png',
-    trustScoreEquity: 85,
-    accuracyEquity: 0.71,
     totalCallsEquity: 28,
     winRateEquity: 62,
-    trustScoreDerivative: 78,
-    accuracyDerivative: 0.65,
     totalCallsDerivative: 14,
     winRateDerivative: 55,
     equityCalls: 28,
@@ -115,12 +99,8 @@ const mockBrokers: Broker[] = [
   {
     name: 'IIFL Securities',
     logo: '/iifl.png',
-    trustScoreEquity: 87,
-    accuracyEquity: 0.73,
     totalCallsEquity: 22,
     winRateEquity: 64,
-    trustScoreDerivative: 81,
-    accuracyDerivative: 0.69,
     totalCallsDerivative: 18,
     winRateDerivative: 58,
     equityCalls: 22,
@@ -142,12 +122,8 @@ const mockBrokers: Broker[] = [
   {
     name: 'Kotak Securities',
     logo: '/kotak.png',
-    trustScoreEquity: 90,
-    accuracyEquity: 0.76,
     totalCallsEquity: 29,
     winRateEquity: 67,
-    trustScoreDerivative: 83,
-    accuracyDerivative: 0.7,
     totalCallsDerivative: 15,
     winRateDerivative: 60,
     equityCalls: 29,
@@ -169,12 +145,8 @@ const mockBrokers: Broker[] = [
   {
     name: 'Motilal Oswal',
     logo: '/mo.png',
-    trustScoreEquity: 89,
-    accuracyEquity: 0.75,
     totalCallsEquity: 27,
     winRateEquity: 66,
-    trustScoreDerivative: 82,
-    accuracyDerivative: 0.68,
     totalCallsDerivative: 16,
     winRateDerivative: 59,
     equityCalls: 27,
@@ -196,12 +168,8 @@ const mockBrokers: Broker[] = [
   {
     name: 'SBI Securities',
     logo: '/sbi.png',
-    trustScoreEquity: 86,
-    accuracyEquity: 0.72,
     totalCallsEquity: 24,
     winRateEquity: 63,
-    trustScoreDerivative: 79,
-    accuracyDerivative: 0.66,
     totalCallsDerivative: 17,
     winRateDerivative: 57,
     equityCalls: 24,
@@ -223,18 +191,37 @@ const mockBrokers: Broker[] = [
 ];
 
 export default function MyBrokersPage() {
-  const [selectedBroker, setSelectedBroker] = useState<Broker | null>(null);
+  const [selectedBroker, setSelectedBroker] = useState<any | null>(null);
   const [sortBy, setSortBy] = useState<'trustScore' | 'accuracy' | 'winRate'>('trustScore');
   const [activeTab, setActiveTab] = useState<'Equity' | 'Derivative'>('Equity');
+  const [brokerLoading, setBrokerLoading] = useState(false);
+  const [brokerError, setBrokerError] = useState('');
+
+  // Fetch broker stats from backend when selectedBroker is set (by name)
+  useEffect(() => {
+    if (selectedBroker && typeof selectedBroker === 'string') {
+      setBrokerLoading(true);
+      setBrokerError('');
+      fetch(`/api/calls/broker/${encodeURIComponent(selectedBroker)}`)
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch broker stats');
+          return res.json();
+        })
+        .then(data => {
+          setSelectedBroker(data);
+          setBrokerLoading(false);
+        })
+        .catch(err => {
+          setBrokerError('Could not load broker data.');
+          setBrokerLoading(false);
+        });
+    }
+  }, [selectedBroker]);
 
   const sortedBrokers = [...mockBrokers].sort((a, b) => {
     if (activeTab === 'Equity') {
-      if (sortBy === 'trustScore') return b.trustScoreEquity - a.trustScoreEquity;
-      if (sortBy === 'accuracy') return b.accuracyEquity - a.accuracyEquity;
       if (sortBy === 'winRate') return b.winRateEquity - a.winRateEquity;
     } else {
-      if (sortBy === 'trustScore') return b.trustScoreDerivative - a.trustScoreDerivative;
-      if (sortBy === 'accuracy') return b.accuracyDerivative - a.accuracyDerivative;
       if (sortBy === 'winRate') return b.winRateDerivative - a.winRateDerivative;
     }
     return 0;
@@ -267,7 +254,7 @@ export default function MyBrokersPage() {
                   ? { border: '2px solid #E87A2B' }
                   : {}
               }
-              onClick={() => setSelectedBroker(broker)}
+              onClick={() => setSelectedBroker(broker.name)}
             >
               <div className="p-5 flex items-center gap-4">
                 <Image
@@ -311,111 +298,121 @@ export default function MyBrokersPage() {
             className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             onClick={e => e.stopPropagation()}
           >
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-4">
-                  <Image
-                    src={selectedBroker.logo}
-                    alt={selectedBroker.name}
-                    width={128}
-                    height={128}
-                    className="object-contain flex-shrink-0"
-                  />
-                  <div>
-                    <h3 className="text-2xl text-gray-900">{selectedBroker.name}</h3>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setSelectedBroker(null)}
-                  className="p-2 hover:bg-gray-100 rounded-full transition"
-                >
-                  <FaTimes className="text-gray-500" />
-                </button>
-              </div>
-            </div>
-            {/* Tabs for Equity/Derivatives Split - after separator line */}
-            <div className="px-6 pt-4 flex gap-2 border-b border-gray-100">
-              <button
-                className={`px-4 py-2 rounded-t-lg font-medium transition border-b-2 focus:outline-none
-                  ${activeTab === 'Equity' ? 'border-blue-600 text-blue-700 bg-blue-50' : 'border-transparent text-gray-500 bg-transparent hover:bg-gray-100'}`}
-                onClick={() => setActiveTab('Equity')}
-              >
-                Equity ({selectedBroker.equityCalls})
-              </button>
-              <button
-                className={`px-4 py-2 rounded-t-lg font-medium transition border-b-2 focus:outline-none
-                  ${activeTab === 'Derivative' ? 'border-orange-500 text-orange-700 bg-orange-50' : 'border-transparent text-gray-500 bg-transparent hover:bg-gray-100'}`}
-                onClick={() => setActiveTab('Derivative')}
-              >
-                Derivatives ({selectedBroker.derivativeCalls})
-              </button>
-            </div>
-
-            <div className="p-6">
-              {/* Key Metrics */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-500">Trust Score</p>
-                  <p className="text-xl font-semibold text-gray-900">
-                    {activeTab === 'Equity' ? selectedBroker.trustScoreEquity : selectedBroker.trustScoreDerivative}
-                  </p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-500">Accuracy</p>
-                  <p className="text-xl font-semibold text-gray-900">
-                    {activeTab === 'Equity'
-                      ? Math.round(selectedBroker.accuracyEquity * 100)
-                      : Math.round(selectedBroker.accuracyDerivative * 100)}%
-                  </p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-500">Win Rate</p>
-                  <p className="text-xl font-semibold text-gray-900">
-                    {activeTab === 'Equity' ? selectedBroker.winRateEquity : selectedBroker.winRateDerivative}%
-                  </p>
-                </div>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-sm text-gray-500">Total Calls</p>
-                  <p className="text-xl font-semibold text-gray-900">
-                    {activeTab === 'Equity' ? selectedBroker.totalCallsEquity : selectedBroker.totalCallsDerivative}
-                  </p>
-                </div>
-              </div>
-
-              {/* Recent Calls */}
-              <div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                  <FaHistory className="text-indigo-600" /> Recent Calls
-                </h4>
-                <div className="space-y-3">
-                  {selectedBroker.recentCalls.filter(call => call.type === activeTab).slice(0, 3).map((call, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium text-gray-900">{call.stock}</span>
-                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                          call.action === 'BUY' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                          {call.action}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                          call.status === 'ACTIVE'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-200 text-gray-700'
-                        }`}>
-                          {call.status === 'ACTIVE' ? 'Active' : 'Closed'}
-                        </span>
-                        <span className="text-gray-500 flex items-center gap-1">
-                          <FaCalendarAlt className="text-gray-400" />
-                          {call.date}
-                        </span>
+            {brokerLoading ? (
+              <div className="p-8 text-center text-gray-500">Loading...</div>
+            ) : brokerError ? (
+              <div className="p-8 text-center text-red-500">{brokerError}</div>
+            ) : (
+              <>
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-4">
+                      <Image
+                        src={selectedBroker.logo}
+                        alt={selectedBroker.name}
+                        width={128}
+                        height={128}
+                        className="object-contain flex-shrink-0"
+                      />
+                      <div>
+                        <h3 className="text-2xl text-gray-900">{selectedBroker.name}</h3>
                       </div>
                     </div>
-                  ))}
+                    <button 
+                      onClick={() => setSelectedBroker(null)}
+                      className="p-2 hover:bg-gray-100 rounded-full transition"
+                    >
+                      <FaTimes className="text-gray-500" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </div>
+                {/* Tabs for Equity/Derivatives Split - after separator line */}
+                <div className="px-6 pt-4 flex gap-2 border-b border-gray-100">
+                  <button
+                    className={`px-4 py-2 rounded-t-lg font-medium transition border-b-2 focus:outline-none
+                      ${activeTab === 'Equity' ? 'border-blue-600 text-blue-700 bg-blue-50' : 'border-transparent text-gray-500 bg-transparent hover:bg-gray-100'}`}
+                    onClick={() => setActiveTab('Equity')}
+                  >
+                    Equity ({selectedBroker.equityCalls})
+                  </button>
+                  <button
+                    className={`px-4 py-2 rounded-t-lg font-medium transition border-b-2 focus:outline-none
+                      ${activeTab === 'Derivative' ? 'border-orange-500 text-orange-700 bg-orange-50' : 'border-transparent text-gray-500 bg-transparent hover:bg-gray-100'}`}
+                    onClick={() => setActiveTab('Derivative')}
+                  >
+                    Derivatives ({selectedBroker.derivativeCalls})
+                  </button>
+                </div>
+
+                <div className="p-6">
+                  {/* Key Metrics */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-sm text-gray-500">Trust Score</p>
+                      <p className="text-xl font-semibold text-gray-900">
+                        {activeTab === 'Equity' ? selectedBroker.trustScoreEquity : selectedBroker.trustScoreDerivative}
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-sm text-gray-500">Accuracy</p>
+                      <p className="text-xl font-semibold text-gray-900">
+                        {activeTab === 'Equity'
+                          ? Math.round(selectedBroker.accuracyEquity * 100)
+                          : Math.round(selectedBroker.accuracyDerivative * 100)}%
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-sm text-gray-500">Win Rate</p>
+                      <p className="text-xl font-semibold text-gray-900">
+                        {activeTab === 'Equity' ? selectedBroker.winRateEquity : selectedBroker.winRateDerivative}%
+                      </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <p className="text-sm text-gray-500">Total Calls</p>
+                      <p className="text-xl font-semibold text-gray-900">
+                        {activeTab === 'Equity' ? selectedBroker.totalCallsEquity : selectedBroker.totalCallsDerivative}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Recent Calls */}
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                      <FaHistory className="text-indigo-600" /> Recent Calls
+                    </h4>
+                    <div className="space-y-3">
+                      {selectedBroker.recentCalls && Array.isArray(selectedBroker.recentCalls)
+                        ? selectedBroker.recentCalls.filter((call: any) => call.type === activeTab).slice(0, 3).map((call: any, idx: number) => (
+                            <div key={idx} className="flex items-center justify-between bg-gray-50 rounded-lg p-4">
+                              <div className="flex items-center gap-3">
+                                <span className="font-medium text-gray-900">{call.stock}</span>
+                                <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                  call.action === 'BUY' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                                }`}>
+                                  {call.action}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                                  call.status === 'ACTIVE'
+                                    ? 'bg-yellow-100 text-yellow-800'
+                                    : 'bg-gray-200 text-gray-700'
+                                }`}>
+                                  {call.status === 'ACTIVE' ? 'Active' : 'Closed'}
+                                </span>
+                                <span className="text-gray-500 flex items-center gap-1">
+                                  <FaCalendarAlt className="text-gray-400" />
+                                  {call.date}
+                                </span>
+                              </div>
+                            </div>
+                          ))
+                        : null}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
