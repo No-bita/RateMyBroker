@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Call } from '@/types/call'; // Adjust import path as needed
