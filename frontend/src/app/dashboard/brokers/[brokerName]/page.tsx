@@ -21,7 +21,8 @@ export default function BrokerPage() {
         if (!res.ok) throw new Error('Failed to fetch broker calls');
         const data = await res.json();
         setCalls(data.calls);
-      } catch (err) {
+      } catch (error) {
+        console.error('Error fetching broker calls:', error);
         setError('Could not load broker calls.');
       } finally {
         setLoading(false);
