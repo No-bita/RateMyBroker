@@ -18,7 +18,6 @@ const blacklistedTokenSchema = new Schema<IBlacklistedToken>(
     expiresAt: {
       type: Date,
       required: true,
-      index: true,
     },
   },
   {

@@ -12,6 +12,7 @@ import { env, isProd } from './config/env';
 import cookieParser from 'cookie-parser';
 import './utils/priceTrackerJob';
 import session from 'express-session';
+import MongoStore from 'connect-mongo';
 import passport from 'passport';
 import './config/passport';
 
@@ -35,6 +36,15 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'your_secret',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: env.mongoUri,
+    ttl: 14 * 24 * 60 * 60, // 14 days
+  }),
+  cookie: {
+    secure: isProd,
+    httpOnly: true,
+    maxAge: 14 * 24 * 60 * 60 * 1000 // 14 days
+  }
 }));
 app.use(passport.initialize());
 app.use(passport.session());
