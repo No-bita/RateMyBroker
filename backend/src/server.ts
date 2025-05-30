@@ -18,14 +18,18 @@ import './config/passport';
 // Create Express app
 const app = express();
 
+// Increase memory limit
+const v8 = require('v8');
+v8.setFlagsFromString('--max-old-space-size=512');
+
 // Middleware
 app.use(helmet());
 app.use(cors({
   origin: env.corsOrigin,
   credentials: true,
 }));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 app.use(session({
   secret: process.env.SESSION_SECRET || 'your_secret',
@@ -57,9 +61,10 @@ app.use('/api/stocks', stockRoutes);
 app.use(errorHandler);
 
 // Start server
-app.listen(env.port, () => {
-  console.log(`Server is running in ${env.nodeEnv} mode on port ${env.port}`);
+const port = parseInt(process.env.PORT || env.port.toString(), 10);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is running in ${env.nodeEnv} mode on port ${port}`);
   if (!isProd) {
-    console.log(`API Documentation available at http://localhost:${env.port}/api-docs`);
+    console.log(`API Documentation available at http://localhost:${port}/api-docs`);
   }
 }); 

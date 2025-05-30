@@ -2,7 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002  ';
 
 interface User {
   id: string;
