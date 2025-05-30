@@ -18,7 +18,7 @@ router.get('/search', async (req, res) => {
   const q = req.query.q as string;
   if (!q) return res.json([]);
   try {
-    const results = await yahooFinance.search(q, { quotesCount: 10 });
+    const results = await yahooFinance.search(q);
     const stocks = (results.quotes || []).map(item => ({
       symbol: item.symbol,
       name: item.shortname || item.longname || item.symbol,
