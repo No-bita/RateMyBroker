@@ -28,24 +28,24 @@ export default function LandingPage() {
 
         </div>
         <div className="flex gap-4">
-          <Link href="/auth/login">
+          <Link href="/auth/register">
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.2, duration: 0.4 }}
-              className="px-6 py-2 rounded-full bg-[#374151] text-gray-100 font-semibold inline-block cursor-pointer"
+              className="px-6 py-2 rounded-full bg-[#374151] text-white font-semibold inline-block cursor-pointer"
             >
-              Sign In
+              Register
             </motion.div>
           </Link>
-          <Link href="/auth/register">
+          <Link href="/auth/login">
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1.3, duration: 0.4 }}
               className="px-6 py-2 rounded-full bg-[#E9F366] text-black font-semibold inline-block cursor-pointer"
             >
-              Register
+              Sign In
             </motion.div>
           </Link>
         </div>
@@ -221,7 +221,7 @@ export default function LandingPage() {
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className="px-8 py-3 rounded-full bg-black text-white font-semibold cursor-pointer inline-block"
+                  className="px-8 py-3 rounded-full bg-[#374151] text-white font-semibold cursor-pointer inline-block"
                 >
                   Get Started
                 </motion.div>
