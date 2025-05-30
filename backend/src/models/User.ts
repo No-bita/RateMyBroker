@@ -1,6 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 import { env } from '../config/env';
 import { COLLECTIONS } from '../config/constants';
 
@@ -87,7 +87,8 @@ userSchema.methods.comparePassword = async function (candidatePassword: string):
 // Generate JWT token
 userSchema.methods.generateAuthToken = function (): string {
   const payload = { id: this._id, email: this.email, role: this.role };
-  return jwt.sign(payload, env.jwtSecret as jwt.Secret, { expiresIn: env.jwtExpiresIn });
+  const options: SignOptions = { expiresIn: env.jwtExpiresIn };
+  return jwt.sign(payload, env.jwtSecret, options);
 };
 
 export const User = mongoose.model<IUser>('User', userSchema); 
