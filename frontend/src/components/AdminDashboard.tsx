@@ -19,6 +19,13 @@ type Call = {
   attachments?: { name: string; url: string }[];
 };
 
+// Utility to get auth-token from cookies
+function getAuthToken() {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|; )auth-token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export default function AdminDashboard() {
   const [pendingCalls, setPendingCalls] = useState<Call[]>([]);
   const [approvedCalls, setApprovedCalls] = useState<Call[]>([]);
@@ -36,12 +43,17 @@ export default function AdminDashboard() {
     setLoading(true);
     setError('');
     try {
+      const token = getAuthToken();
       // Fetch pending
-      const pendingRes = await fetch(`${API_BASE}/api/calls/pending`, { credentials: 'include' });
+      const pendingRes = await fetch(`${API_BASE}/api/calls/pending`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       const pendingData = await pendingRes.json();
       setPendingCalls(pendingData.data.calls || []);
       // Fetch all non-pending
-      const allRes = await fetch(`${API_BASE}/api/calls`, { credentials: 'include' });
+      const allRes = await fetch(`${API_BASE}/api/calls`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       const allData = await allRes.json();
       setApprovedCalls((allData.data.calls || []).filter((c: Call) => c.status === 'APPROVED'));
       setRejectedCalls((allData.data.calls || []).filter((c: Call) => c.status === 'REJECTED'));
@@ -55,9 +67,10 @@ export default function AdminDashboard() {
   async function handleAction(callId: string, action: 'approve' | 'reject') {
     setActionLoading(callId + action);
     try {
+      const token = getAuthToken();
       const res = await fetch(`${API_BASE}/api/calls/${callId}/${action}`, {
         method: 'POST',
-        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
       if (!res.ok) throw new Error('Failed to update call status');
       await fetchAllCalls();

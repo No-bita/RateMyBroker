@@ -139,6 +139,13 @@ const maxCompare = 3;
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002';
 
+// Utility to get auth-token from cookies
+function getAuthToken() {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|; )auth-token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export default function DashboardPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -272,8 +279,9 @@ export default function DashboardPage() {
       setUserCallsLoading(true);
       setUserCallsError('');
       try {
+        const token = getAuthToken();
         const res = await fetch(`${API_BASE}/api/calls/my`, {
-          credentials: 'include',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         });
         if (!res.ok) throw new Error('Failed to fetch your calls');
         const data = await res.json();
@@ -328,7 +336,10 @@ export default function DashboardPage() {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`${API_BASE}/api/calls`, { credentials: 'include' });
+        const token = getAuthToken();
+        const res = await fetch(`${API_BASE}/api/calls`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
         if (!res.ok) throw new Error('Failed to fetch calls');
         const data = await res.json();
         setCalls(data.data.calls);

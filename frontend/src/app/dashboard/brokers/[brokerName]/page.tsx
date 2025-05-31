@@ -6,6 +6,13 @@ import { Call } from '@/types/call'; // Adjust import path as needed
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002';
 
+// Utility to get auth-token from cookies
+function getAuthToken() {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|; )auth-token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export default function BrokerPage() {
   const { brokerName } = useParams();
   const [calls, setCalls] = useState<Call[]>([]);
@@ -17,7 +24,10 @@ export default function BrokerPage() {
       setLoading(true);
       setError('');
       try {
-        const res = await fetch(`${API_BASE}/api/calls?broker=${brokerName}`, { credentials: 'include' });
+        const token = getAuthToken();
+        const res = await fetch(`${API_BASE}/api/calls?broker=${brokerName}`, {
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
         if (!res.ok) throw new Error('Failed to fetch broker calls');
         const data = await res.json();
         setCalls(data.calls);

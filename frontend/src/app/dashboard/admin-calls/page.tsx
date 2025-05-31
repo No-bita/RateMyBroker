@@ -23,6 +23,13 @@ interface Call {
   attachments: Array<{ name: string; url: string }>;
 }
 
+// Utility to get auth-token from cookies
+function getAuthToken() {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(/(?:^|; )auth-token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 export default function AdminCallsPage() {
   const [pendingCalls, setPendingCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,8 +44,9 @@ export default function AdminCallsPage() {
     setLoading(true);
     setError("");
     try {
+      const token = getAuthToken();
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/calls/pending`, {
-        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
       if (!res.ok) throw new Error("Failed to fetch pending calls");
       const data = await res.json();
@@ -53,9 +61,10 @@ export default function AdminCallsPage() {
   async function handleAction(callId: string, action: "approve" | "reject") {
     setActionLoading(callId + action);
     try {
+      const token = getAuthToken();
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/calls/${callId}/${action}`, {
         method: 'POST',
-        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
       if (!res.ok) throw new Error("Failed to update call status");
       // Remove the call from the list

@@ -103,7 +103,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         {/* Bottom section: Help and Logout */}
         <div className="flex flex-col gap-2 mt-8 pt-4 border-t border-gray-200">
           <Link
-            href="/help"
+            href="mailto:info.ratemybroker@gmail.com"
             className="flex items-center gap-3 px-4 py-2 rounded-lg text-base hover:bg-gray-100 transition w-full"
             style={{ color: '#A3A9B6' }}
           >
