@@ -21,8 +21,16 @@ declare global {
 
 export const protect = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get token from cookie
-    const token = req.cookies['auth-token'];
+    // Get token from Authorization header or cookie
+    let token: string | undefined = undefined;
+    if (
+      req.headers.authorization &&
+      req.headers.authorization.startsWith('Bearer ')
+    ) {
+      token = req.headers.authorization.split(' ')[1];
+    } else {
+      token = req.cookies['auth-token'];
+    }
     if (!token) {
       return next(new AppError('Not authorized to access this route', 401));
     }
