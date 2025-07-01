@@ -11,7 +11,6 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Optional, Tuple
 import logging
 import time
-import random
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -33,7 +32,7 @@ class SimplePriceAnalyzer:
         
     def fetch_stock_price_data(self, symbol: str, start_date: str, end_date: str) -> Optional[List[Dict]]:
         """
-        Fetch historical price data for a stock
+        Fetch historical price data for a stock from Yahoo Finance
         
         Args:
             symbol: Stock symbol
@@ -44,22 +43,24 @@ class SimplePriceAnalyzer:
             List of price data dictionaries or None if failed
         """
         try:
-            # Try multiple data sources
-            data = self._fetch_from_alpha_vantage(symbol, start_date, end_date)
-            if data is not None:
-                return data
-            
+            # Try Yahoo Finance first
             data = self._fetch_from_yahoo_finance(symbol, start_date, end_date)
             if data is not None:
                 return data
             
-            # Fallback to simulated data
-            logger.warning(f"Using simulated data for {symbol}")
-            return self._generate_simulated_data(symbol, start_date, end_date)
+            # Try Alpha Vantage as backup
+            if self.api_key:
+                data = self._fetch_from_alpha_vantage(symbol, start_date, end_date)
+                if data is not None:
+                    return data
+            
+            # If no data available, return None
+            logger.error(f"No price data available for {symbol}")
+            return None
             
         except Exception as e:
             logger.error(f"Failed to fetch price data for {symbol}: {e}")
-            return self._generate_simulated_data(symbol, start_date, end_date)
+            return None
     
     def _fetch_from_alpha_vantage(self, symbol: str, start_date: str, end_date: str) -> Optional[List[Dict]]:
         """Fetch data from Alpha Vantage API"""
@@ -166,7 +167,7 @@ class SimplePriceAnalyzer:
     
     def fetch_current_price(self, symbol: str) -> Optional[float]:
         """
-        Fetch current price for a stock symbol
+        Fetch current price for a stock symbol from Yahoo Finance
         
         Args:
             symbol: Stock symbol
@@ -175,22 +176,23 @@ class SimplePriceAnalyzer:
             Current price or None if failed
         """
         try:
-            # Try multiple sources for current price
+            # Try Yahoo Finance
             price = self._fetch_current_from_yahoo(symbol)
             if price:
                 return price
             
-            price = self._fetch_current_from_alpha_vantage(symbol)
-            if price:
-                return price
+            # Try Alpha Vantage as backup
+            if self.api_key:
+                price = self._fetch_current_from_alpha_vantage(symbol)
+                if price:
+                    return price
             
-            # Fallback to simulated current price
-            logger.warning(f"Using simulated current price for {symbol}")
-            return self._generate_simulated_current_price(symbol)
+            logger.error(f"No current price data available for {symbol}")
+            return None
             
         except Exception as e:
             logger.error(f"Failed to fetch current price for {symbol}: {e}")
-            return self._generate_simulated_current_price(symbol)
+            return None
     
     def _fetch_current_from_yahoo(self, symbol: str) -> Optional[float]:
         """Fetch current price from Yahoo Finance"""
@@ -271,62 +273,6 @@ class SimplePriceAnalyzer:
             logger.debug(f"Alpha Vantage current price failed for {symbol}: {e}")
             return None
     
-    def _generate_simulated_current_price(self, symbol: str) -> float:
-        """Generate a realistic simulated current price based on buy price"""
-        # This is a fallback when real data is not available
-        # We'll generate a price that's within a reasonable range of typical stock movements
-        
-        # Use a hash of the symbol to get consistent but varied prices
-        import hashlib
-        hash_val = int(hashlib.md5(symbol.encode()).hexdigest()[:8], 16)
-        
-        # Generate a price between 50 and 5000
-        base_price = 50 + (hash_val % 4950)
-        
-        # Add some random variation (-20% to +30%)
-        variation = random.uniform(-0.2, 0.3)
-        current_price = base_price * (1 + variation)
-        
-        return round(current_price, 2)
-    
-    def _generate_simulated_data(self, symbol: str, start_date: str, end_date: str) -> List[Dict]:
-        """Generate simulated price data for testing"""
-        start_dt = datetime.strptime(start_date, '%Y-%m-%d')
-        end_dt = datetime.strptime(end_date, '%Y-%m-%d')
-        
-        # Generate date range
-        current_dt = start_dt
-        price_data = []
-        
-        # Simulate price movement
-        base_price = random.uniform(100, 5000)
-        current_price = base_price
-        
-        while current_dt <= end_dt:
-            # Daily price change (-2% to +3%)
-            change_pct = random.uniform(-0.02, 0.03)
-            current_price *= (1 + change_pct)
-            
-            # Generate OHLC
-            daily_volatility = random.uniform(0.005, 0.02)
-            open_price = current_price
-            high_price = current_price * (1 + random.uniform(0, daily_volatility))
-            low_price = current_price * (1 - random.uniform(0, daily_volatility))
-            close_price = current_price
-            
-            price_data.append({
-                'date': current_dt.strftime('%Y-%m-%d'),
-                'open': open_price,
-                'high': high_price,
-                'low': low_price,
-                'close': close_price,
-                'volume': random.randint(100000, 1000000)
-            })
-            
-            current_dt += timedelta(days=1)
-        
-        return price_data
-    
     def analyze_signal_performance(self, signal: Dict, price_data: List[Dict]) -> Dict:
         """
         Analyze trading signal performance against price data with daily comparison
@@ -353,10 +299,14 @@ class SimplePriceAnalyzer:
         target_2_hit = False
         target_3_hit = False
         stop_loss_hit = False
-        final_price = price_data[-1]['close']  # Default to last price
+        final_price = price_data[-1]['close']
         first_hit_date = None
         first_hit_price = None
         outcome = "NO_HIT"
+        
+        # Track high and low prices during the timeframe
+        highest_price = max(day['close'] for day in price_data)
+        lowest_price = min(day['close'] for day in price_data)
         
         # Daily price comparison - continue until stop loss or end of timeframe
         for day_data in price_data:
@@ -392,7 +342,7 @@ class SimplePriceAnalyzer:
                     first_hit_date = date
                     first_hit_price = close_price
         
-        # Determine final outcome based on what was hit
+        # Determine final outcome
         if stop_loss_hit:
             outcome = "STOP_LOSS_HIT"
         elif target_3_hit:
@@ -410,6 +360,8 @@ class SimplePriceAnalyzer:
         
         return {
             'current_price': final_price,
+            'highest_price': highest_price,
+            'lowest_price': lowest_price,
             'target_1_hit': target_1_hit,
             'target_2_hit': target_2_hit,
             'target_3_hit': target_3_hit,
@@ -424,6 +376,8 @@ class SimplePriceAnalyzer:
         """Create empty analysis when no price data is available"""
         return {
             'current_price': None,
+            'highest_price': None,
+            'lowest_price': None,
             'target_1_hit': False,
             'target_2_hit': False,
             'target_3_hit': False,
@@ -439,34 +393,41 @@ class SimplePriceAnalyzer:
         Analyze multiple trading signals
         
         Args:
-            signals: List of trading signals
+            signals: List of trading signal dictionaries
             
         Returns:
-            List of signals with performance analysis
+            List of signals with price analysis results
         """
+        if not signals:
+            return []
+        
         analyzed_signals = []
         
-        for i, signal in enumerate(signals):
-            logger.info(f"Analyzing signal {i+1}/{len(signals)}: {signal['stock']}")
+        for i, signal in enumerate(signals, 1):
+            logger.info(f"Analyzing signal {i}/{len(signals)}: {signal['stock']}")
             
             # Fetch price data
             price_data = self.fetch_stock_price_data(
-                signal['stock'],
-                signal['listing_date'],
+                signal['stock'], 
+                signal['listing_date'], 
                 signal['cutoff_date']
             )
             
+            if price_data is None:
+                logger.warning(f"No price data available for {signal['stock']}, skipping analysis")
+                # Add signal with empty analysis
+                result = signal.copy()
+                result['price_analysis'] = self._create_empty_analysis()
+                analyzed_signals.append(result)
+                continue
+            
             # Analyze performance
-            performance = self.analyze_signal_performance(signal, price_data)
+            analysis = self.analyze_signal_performance(signal, price_data)
             
-            # Combine signal and performance data
-            analyzed_signal = signal.copy()
-            analyzed_signal['price_analysis'] = performance
-            
-            analyzed_signals.append(analyzed_signal)
-            
-            # Add delay to avoid rate limiting
-            time.sleep(0.5)
+            # Combine signal and analysis
+            result = signal.copy()
+            result['price_analysis'] = analysis
+            analyzed_signals.append(result)
         
         return analyzed_signals
     
@@ -481,8 +442,9 @@ class SimplePriceAnalyzer:
             fieldnames = [
                 'stock', 'listing_date', 'cutoff_date', 'buy_price', 'stop_loss',
                 'target_1', 'target_2', 'target_3', 'time_frame', 'current_price',
-                'target_1_hit', 'target_2_hit', 'target_3_hit', 'stop_loss_hit',
-                'first_hit_date', 'first_hit_price', 'outcome', 'data_points'
+                'highest_price', 'lowest_price', 'target_1_hit', 'target_2_hit',
+                'target_3_hit', 'stop_loss_hit', 'first_hit_date', 'first_hit_price',
+                'outcome', 'data_points'
             ]
             
             with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
@@ -503,6 +465,8 @@ class SimplePriceAnalyzer:
                         'target_3': signal.get('target_3'),
                         'time_frame': signal['time_frame'],
                         'current_price': analysis.get('current_price'),
+                        'highest_price': analysis.get('highest_price'),
+                        'lowest_price': analysis.get('lowest_price'),
                         'target_1_hit': analysis.get('target_1_hit'),
                         'target_2_hit': analysis.get('target_2_hit'),
                         'target_3_hit': analysis.get('target_3_hit'),
@@ -549,6 +513,8 @@ class SimplePriceAnalyzer:
             analysis = signal.get('price_analysis', {})
             print(f"{signal['stock']:10} | Buy: {signal['buy_price_1']:8.2f} | "
                   f"Current: {analysis.get('current_price', 0):8.2f} | "
+                  f"High: {analysis.get('highest_price', 0):8.2f} | "
+                  f"Low: {analysis.get('lowest_price', 0):8.2f} | "
                   f"Outcome: {analysis.get('outcome', 'N/A'):15}")
         
         print("=" * 80)
