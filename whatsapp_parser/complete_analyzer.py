@@ -9,6 +9,7 @@ import json
 import sys
 from datetime import datetime
 from typing import List, Dict
+import os
 
 from signal_analyzer import TradingSignalAnalyzer
 from simple_price_analyzer import SimplePriceAnalyzer
@@ -47,8 +48,12 @@ class CompleteAnalyzer:
         # Print signal analysis summary
         self.signal_analyzer.print_summary()
         
+        # Output file naming
+        base = os.path.splitext(os.path.basename(json_file))[0]
+        analyzed_csv = f"analyzed_signals_{base}.csv"
+        perf_csv = f"performance_report_{base}.csv"
         # Export signal analysis
-        self.signal_analyzer.export_analysis_to_csv('analyzed_signals.csv')
+        self.signal_analyzer.export_analysis_to_csv(analyzed_csv)
         
         results = {
             'total_signals': len(analyzed_signals),
@@ -68,7 +73,7 @@ class CompleteAnalyzer:
             self.price_analyzer.print_performance_summary(performance_results)
             
             # Export performance report
-            self.price_analyzer.export_performance_report(performance_results, 'performance_report.csv')
+            self.price_analyzer.export_performance_report(performance_results, perf_csv)
             
             results['performance_analysis'] = performance_results
         elif expired_signals:
@@ -98,8 +103,12 @@ class CompleteAnalyzer:
         # Print signal analysis summary
         self.signal_analyzer.print_summary()
         
+        # Output file naming
+        base = os.path.splitext(os.path.basename(csv_file))[0]
+        analyzed_csv = f"analyzed_signals_{base}.csv"
+        perf_csv = f"performance_report_{base}.csv"
         # Export signal analysis
-        self.signal_analyzer.export_analysis_to_csv('analyzed_signals.csv')
+        self.signal_analyzer.export_analysis_to_csv(analyzed_csv)
         
         results = {
             'total_signals': len(analyzed_signals),
@@ -119,7 +128,7 @@ class CompleteAnalyzer:
             self.price_analyzer.print_performance_summary(performance_results)
             
             # Export performance report
-            self.price_analyzer.export_performance_report(performance_results, 'performance_report.csv')
+            self.price_analyzer.export_performance_report(performance_results, perf_csv)
             
             results['performance_analysis'] = performance_results
         elif expired_signals:
@@ -228,8 +237,10 @@ Examples:
         # Determine file type and analyze
         if args.input_file.endswith('.json'):
             results = analyzer.analyze_from_json(args.input_file, not args.no_price_analysis)
+            base = os.path.splitext(os.path.basename(args.input_file))[0]
         elif args.input_file.endswith('.csv'):
             results = analyzer.analyze_from_csv(args.input_file, not args.no_price_analysis)
+            base = os.path.splitext(os.path.basename(args.input_file))[0]
         else:
             print("Error: Input file must be JSON or CSV")
             sys.exit(1)
@@ -250,9 +261,9 @@ Examples:
         
         print(f"\nAnalysis completed successfully!")
         print(f"Files generated:")
-        print(f"  - analyzed_signals.csv (signal analysis)")
+        print(f"  - analyzed_signals_{base}.csv (signal analysis)")
         if results.get('performance_analysis'):
-            print(f"  - performance_report.csv (price analysis)")
+            print(f"  - performance_report_{base}.csv (price analysis)")
         
     except Exception as e:
         print(f"Error during analysis: {e}")
